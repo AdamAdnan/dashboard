@@ -63,7 +63,7 @@ def create_rfm_df(df):
 
     return rfm_df
 
-all_df = pd.read_csv("/content/drive/MyDrive/Data Science/Dicoding/Belajar Fundamental Analisis Data/dataset/all_data.csv")
+all_df = pd.read_csv("all_data.csv")
 
 datetime_columns = ["order_date", "delivery_date"]
 all_df.sort_values(by="order_date", inplace=True)
