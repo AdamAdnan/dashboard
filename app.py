@@ -1,252 +1,372 @@
+# import pandas as pd
+# import matplotlib.pyplot as plt
+# import seaborn as sns
+# import streamlit as st
+# from babel.numbers import format_currency
+# sns.set(style='dark')
+
+# def create_daily_orders_df(df):
+#     daily_orders_df = df.resample(rule='D', on='order_date').agg({
+#         "order_id": "nunique",
+#         "total_price": "sum"
+#     })
+#     daily_orders_df = daily_orders_df.reset_index()
+#     daily_orders_df.rename(columns={
+#         "order_id": "order_count",
+#         "total_price": "revenue"
+#     }, inplace=True)
+
+#     return daily_orders_df
+
+# def create_sum_order_items_df(df):
+#     sum_order_items_df = df.groupby("product_name").quantity_x.sum().sort_values(ascending=False).reset_index()
+#     return sum_order_items_df
+
+# def create_bygender_df(df):
+#     bygender_df = df.groupby(by="gender").customer_id.nunique().reset_index()
+#     bygender_df.rename(columns={
+#         "customer_id": "customer_count"
+#     }, inplace=True)
+
+#     return bygender_df
+
+# def create_byage_df(df):
+#     byage_df = df.groupby(by="age_group").customer_id.nunique().reset_index()
+#     byage_df.rename(columns={
+#         "customer_id": "customer_count"
+#     }, inplace=True)
+#     byage_df['age_group'] = pd.Categorical(byage_df['age_group'], ["Youth", "Adults", "Seniors"])
+
+#     return byage_df
+
+# def create_bystate_df(df):
+#     bystate_df = df.groupby(by="state").customer_id.nunique().reset_index()
+#     bystate_df.rename(columns={
+#         "customer_id": "customer_count"
+#     }, inplace=True)
+
+#     return bystate_df
+
+
+# def create_rfm_df(df):
+#     rfm_df = df.groupby(by="customer_id", as_index=False).agg({
+#         "order_date": "max", #mengambil tanggal order terakhir
+#         "order_id": "nunique",
+#         "total_price": "sum"
+#     })
+#     rfm_df.columns = ["customer_id", "max_order_timestamp", "frequency", "monetary"]
+
+#     rfm_df["max_order_timestamp"] = rfm_df["max_order_timestamp"].dt.date
+#     recent_date = df["order_date"].dt.date.max()
+#     rfm_df["recency"] = rfm_df["max_order_timestamp"].apply(lambda x: (recent_date - x).days)
+#     rfm_df.drop("max_order_timestamp", axis=1, inplace=True)
+
+#     return rfm_df
+
+# all_df = pd.read_csv("all_data.csv")
+
+# datetime_columns = ["order_date", "delivery_date"]
+# all_df.sort_values(by="order_date", inplace=True)
+# all_df.reset_index(inplace=True)
+
+# for column in datetime_columns:
+#     all_df[column] = pd.to_datetime(all_df[column])
+
+
+# min_date = all_df["order_date"].min()
+# max_date = all_df["order_date"].max()
+
+# with st.sidebar:
+#     # Menambahkan logo perusahaan
+#     st.image("https://github.com/dicodingacademy/assets/raw/main/logo.png")
+
+#     # Mengambil start_date & end_date dari date_input
+#     start_date, end_date = st.date_input(
+#         label='Rentang Waktu',min_value=min_date,
+#         max_value=max_date,
+#         value=[min_date, max_date]
+#     )
+
+# main_df = all_df[(all_df["order_date"] >= str(start_date)) &
+#                 (all_df["order_date"] <= str(end_date))]
+
+# daily_orders_df = create_daily_orders_df(main_df)
+# sum_order_items_df = create_sum_order_items_df(main_df)
+# bygender_df = create_bygender_df(main_df)
+# byage_df = create_byage_df(main_df)
+# bystate_df = create_bystate_df(main_df)
+# rfm_df = create_rfm_df(main_df)
+
+# st.header('Dicoding Collection Dashboard :sparkles:')
+
+# st.subheader('Daily Orders')
+
+# col1, col2 = st.columns(2)
+
+# with col1:
+#     total_orders = daily_orders_df.order_count.sum()
+#     st.metric("Total orders", value=total_orders)
+# with col2:
+#     total_revenue = format_currency(daily_orders_df.revenue.sum(), "AUD", locale='es_CO')
+#     st.metric("Total Revenue", value=total_revenue)
+
+# fig, ax = plt.subplots(figsize=(16, 8))
+# ax.plot(
+#     daily_orders_df["order_date"],
+#     daily_orders_df["order_count"],
+#     marker='o',
+#     linewidth=2,
+#     color="#90CAF9"
+# )
+# ax.tick_params(axis='y', labelsize=20)
+# ax.tick_params(axis='x', labelsize=15)
+
+# st.pyplot(fig)
+
+# st.subheader("Best & Worst Performing Product")
+
+# fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(35, 15))
+
+# colors = ["#90CAF9", "#D3D3D3", "#D3D3D3", "#D3D3D3", "#D3D3D3"]
+
+# sns.barplot(x="quantity_x", y="product_name", data=sum_order_items_df.head(5), palette=colors, ax=ax[0])
+# ax[0].set_ylabel(None)
+# ax[0].set_xlabel("Number of Sales", fontsize=30)
+# ax[0].set_title("Best Performing Product", loc="center", fontsize=50)
+# ax[0].tick_params(axis='y', labelsize=35)
+# ax[0].tick_params(axis='x', labelsize=30)
+
+# sns.barplot(x="quantity_x", y="product_name", data=sum_order_items_df.sort_values(by="quantity_x", ascending=True).head(5), palette=colors, ax=ax[1])
+# ax[1].set_ylabel(None)
+# ax[1].set_xlabel("Number of Sales", fontsize=30)
+# ax[1].invert_xaxis()
+# ax[1].yaxis.set_label_position("right")
+# ax[1].yaxis.tick_right()
+# ax[1].set_title("Worst Performing Product", loc="center", fontsize=50)
+# ax[1].tick_params(axis='y', labelsize=35)
+# ax[1].tick_params(axis='x', labelsize=30)
+
+# st.pyplot(fig)
+
+# st.subheader("Customer Demographics")
+
+# col1, col2 = st.columns(2)
+
+# with col1:
+#     fig, ax = plt.subplots(figsize=(20, 10))
+
+#     sns.barplot(
+#         y="customer_count",
+#         x="gender",
+#         data=bygender_df.sort_values(by="customer_count", ascending=False),
+#         hue="gender",
+#         palette=colors,
+#         ax=ax
+#     )
+#     ax.set_title("Number of Customer by Gender", loc="center", fontsize=50)
+#     ax.set_ylabel(None)
+#     ax.set_xlabel(None)
+#     ax.tick_params(axis='x', labelsize=35)
+#     ax.tick_params(axis='y', labelsize=30)
+#     st.pyplot(fig)
+
+# with col2:
+#     fig, ax = plt.subplots(figsize=(20, 10))
+
+#     colors = ["#D3D3D3", "#90CAF9", "#D3D3D3", "#D3D3D3", "#D3D3D3"]
+
+#     sns.barplot(
+#         y="customer_count",
+#         x="age_group",
+#         data=byage_df.sort_values(by="age_group", ascending=False),
+#         palette=colors,
+#         hue="age_group",
+#         ax=ax
+#     )
+#     ax.set_title("Number of Customer by Age", loc="center", fontsize=50)
+#     ax.set_ylabel(None)
+#     ax.set_xlabel(None)
+#     ax.tick_params(axis='x', labelsize=35)
+#     ax.tick_params(axis='y', labelsize=30)
+#     st.pyplot(fig)
+
+# fig, ax = plt.subplots(figsize=(20, 10))
+# colors = ["#90CAF9", "#D3D3D3", "#D3D3D3", "#D3D3D3", "#D3D3D3", "#D3D3D3", "#D3D3D3", "#D3D3D3"]
+# sns.barplot(
+#     x="customer_count",
+#     y="state",
+#     data=bystate_df.sort_values(by="customer_count", ascending=False),
+#     hue="customer_count",
+#     palette=colors,
+#     ax=ax
+# )
+# ax.set_title("Number of Customer by States", loc="center", fontsize=30)
+# ax.set_ylabel(None)
+# ax.set_xlabel(None)
+# ax.tick_params(axis='y', labelsize=20)
+# ax.tick_params(axis='x', labelsize=15)
+# st.pyplot(fig)
+
+# st.subheader("Best Customer Based on RFM Parameters")
+
+# col1, col2, col3 = st.columns(3)
+
+# with col1:
+#     avg_recency = round(rfm_df.recency.mean(), 1)
+#     st.metric("Average Recency (days)", value=avg_recency)
+
+# with col2:
+#     avg_frequency = round(rfm_df.frequency.mean(), 2)
+#     st.metric("Average Frequency", value=avg_frequency)
+
+# with col3:
+#     avg_frequency = format_currency(rfm_df.monetary.mean(), "AUD", locale='es_CO')
+#     st.metric("Average Monetary", value=avg_frequency)
+
+# fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(35, 15))
+# colors = ["#90CAF9", "#90CAF9", "#90CAF9", "#90CAF9", "#90CAF9"]
+
+# sns.barplot(y="recency", x="customer_id", data=rfm_df.sort_values(by="recency", ascending=True).head(5), palette=colors, ax=ax[0])
+# ax[0].set_ylabel(None)
+# ax[0].set_xlabel("customer_id", fontsize=30)
+# ax[0].set_title("By Recency (days)", loc="center", fontsize=50)
+# ax[0].tick_params(axis='y', labelsize=30)
+# ax[0].tick_params(axis='x', labelsize=35)
+
+# sns.barplot(y="frequency", x="customer_id", data=rfm_df.sort_values(by="frequency", ascending=False).head(5), palette=colors, ax=ax[1])
+# ax[1].set_ylabel(None)
+# ax[1].set_xlabel("customer_id", fontsize=30)
+# ax[1].set_title("By Frequency", loc="center", fontsize=50)
+# ax[1].tick_params(axis='y', labelsize=30)
+# ax[1].tick_params(axis='x', labelsize=35)
+
+# sns.barplot(y="monetary", x="customer_id", data=rfm_df.sort_values(by="monetary", ascending=False).head(5), palette=colors, ax=ax[2])
+# ax[2].set_ylabel(None)
+# ax[2].set_xlabel("customer_id", fontsize=30)
+# ax[2].set_title("By Monetary", loc="center", fontsize=50)
+# ax[2].tick_params(axis='y', labelsize=30)
+# ax[2].tick_params(axis='x', labelsize=35)
+
+# st.pyplot(fig)
+
+# st.caption('Copyright (c) Dicoding 2023')
+
+import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-import streamlit as st
-from babel.numbers import format_currency
-sns.set(style='dark')
 
-def create_daily_orders_df(df):
-    daily_orders_df = df.resample(rule='D', on='order_date').agg({
-        "order_id": "nunique",
-        "total_price": "sum"
-    })
-    daily_orders_df = daily_orders_df.reset_index()
-    daily_orders_df.rename(columns={
-        "order_id": "order_count",
-        "total_price": "revenue"
-    }, inplace=True)
+# =========================
+# CONFIG
+# =========================
+st.set_page_config(page_title="Bike Sharing Dashboard", layout="wide")
 
-    return daily_orders_df
+st.title("🚲 Bike Sharing Data Analysis Dashboard")
 
-def create_sum_order_items_df(df):
-    sum_order_items_df = df.groupby("product_name").quantity_x.sum().sort_values(ascending=False).reset_index()
-    return sum_order_items_df
+# =========================
+# LOAD DATA
+# =========================
+@st.cache_data
+def load_data():
+    df = pd.read_csv("hour.csv")   # ganti jika nama file berbeda
+    return df
 
-def create_bygender_df(df):
-    bygender_df = df.groupby(by="gender").customer_id.nunique().reset_index()
-    bygender_df.rename(columns={
-        "customer_id": "customer_count"
-    }, inplace=True)
+df = load_data()
 
-    return bygender_df
+# =========================
+# SIDEBAR FILTER
+# =========================
+st.sidebar.header("Filter Data")
 
-def create_byage_df(df):
-    byage_df = df.groupby(by="age_group").customer_id.nunique().reset_index()
-    byage_df.rename(columns={
-        "customer_id": "customer_count"
-    }, inplace=True)
-    byage_df['age_group'] = pd.Categorical(byage_df['age_group'], ["Youth", "Adults", "Seniors"])
-
-    return byage_df
-
-def create_bystate_df(df):
-    bystate_df = df.groupby(by="state").customer_id.nunique().reset_index()
-    bystate_df.rename(columns={
-        "customer_id": "customer_count"
-    }, inplace=True)
-
-    return bystate_df
-
-
-def create_rfm_df(df):
-    rfm_df = df.groupby(by="customer_id", as_index=False).agg({
-        "order_date": "max", #mengambil tanggal order terakhir
-        "order_id": "nunique",
-        "total_price": "sum"
-    })
-    rfm_df.columns = ["customer_id", "max_order_timestamp", "frequency", "monetary"]
-
-    rfm_df["max_order_timestamp"] = rfm_df["max_order_timestamp"].dt.date
-    recent_date = df["order_date"].dt.date.max()
-    rfm_df["recency"] = rfm_df["max_order_timestamp"].apply(lambda x: (recent_date - x).days)
-    rfm_df.drop("max_order_timestamp", axis=1, inplace=True)
-
-    return rfm_df
-
-all_df = pd.read_csv("all_data.csv")
-
-datetime_columns = ["order_date", "delivery_date"]
-all_df.sort_values(by="order_date", inplace=True)
-all_df.reset_index(inplace=True)
-
-for column in datetime_columns:
-    all_df[column] = pd.to_datetime(all_df[column])
-
-
-min_date = all_df["order_date"].min()
-max_date = all_df["order_date"].max()
-
-with st.sidebar:
-    # Menambahkan logo perusahaan
-    st.image("https://github.com/dicodingacademy/assets/raw/main/logo.png")
-
-    # Mengambil start_date & end_date dari date_input
-    start_date, end_date = st.date_input(
-        label='Rentang Waktu',min_value=min_date,
-        max_value=max_date,
-        value=[min_date, max_date]
-    )
-
-main_df = all_df[(all_df["order_date"] >= str(start_date)) &
-                (all_df["order_date"] <= str(end_date))]
-
-daily_orders_df = create_daily_orders_df(main_df)
-sum_order_items_df = create_sum_order_items_df(main_df)
-bygender_df = create_bygender_df(main_df)
-byage_df = create_byage_df(main_df)
-bystate_df = create_bystate_df(main_df)
-rfm_df = create_rfm_df(main_df)
-
-st.header('Dicoding Collection Dashboard :sparkles:')
-
-st.subheader('Daily Orders')
-
-col1, col2 = st.columns(2)
-
-with col1:
-    total_orders = daily_orders_df.order_count.sum()
-    st.metric("Total orders", value=total_orders)
-with col2:
-    total_revenue = format_currency(daily_orders_df.revenue.sum(), "AUD", locale='es_CO')
-    st.metric("Total Revenue", value=total_revenue)
-
-fig, ax = plt.subplots(figsize=(16, 8))
-ax.plot(
-    daily_orders_df["order_date"],
-    daily_orders_df["order_count"],
-    marker='o',
-    linewidth=2,
-    color="#90CAF9"
+year_filter = st.sidebar.selectbox(
+    "Pilih Tahun",
+    options=df["yr"].unique(),
+    format_func=lambda x: "2011" if x == 0 else "2012"
 )
-ax.tick_params(axis='y', labelsize=20)
-ax.tick_params(axis='x', labelsize=15)
 
-st.pyplot(fig)
+df_filtered = df[df["yr"] == year_filter]
 
-st.subheader("Best & Worst Performing Product")
+# =========================
+# SECTION 1: WAKTU OPERASIONAL
+# =========================
+st.header("1. ⏰ Waktu Operasional Optimal")
 
-fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(35, 15))
+avg_per_hour = df_filtered.groupby("hr")["cnt"].mean()
 
-colors = ["#90CAF9", "#D3D3D3", "#D3D3D3", "#D3D3D3", "#D3D3D3"]
+fig1, ax1 = plt.subplots()
+avg_per_hour.plot(ax=ax1)
+ax1.set_title("Rata-rata Peminjaman per Jam")
+ax1.set_xlabel("Jam")
+ax1.set_ylabel("Jumlah Rental")
 
-sns.barplot(x="quantity_x", y="product_name", data=sum_order_items_df.head(5), palette=colors, ax=ax[0])
-ax[0].set_ylabel(None)
-ax[0].set_xlabel("Number of Sales", fontsize=30)
-ax[0].set_title("Best Performing Product", loc="center", fontsize=50)
-ax[0].tick_params(axis='y', labelsize=35)
-ax[0].tick_params(axis='x', labelsize=30)
+st.pyplot(fig1)
 
-sns.barplot(x="quantity_x", y="product_name", data=sum_order_items_df.sort_values(by="quantity_x", ascending=True).head(5), palette=colors, ax=ax[1])
-ax[1].set_ylabel(None)
-ax[1].set_xlabel("Number of Sales", fontsize=30)
-ax[1].invert_xaxis()
-ax[1].yaxis.set_label_position("right")
-ax[1].yaxis.tick_right()
-ax[1].set_title("Worst Performing Product", loc="center", fontsize=50)
-ax[1].tick_params(axis='y', labelsize=35)
-ax[1].tick_params(axis='x', labelsize=30)
+# Weekday vs Weekend
+df_filtered["day_type"] = df_filtered["workingday"].apply(lambda x: "Weekday" if x == 1 else "Weekend")
+avg_daytype = df_filtered.groupby(["hr", "day_type"])["cnt"].mean().reset_index()
 
-st.pyplot(fig)
+fig2, ax2 = plt.subplots()
+sns.lineplot(data=avg_daytype, x="hr", y="cnt", hue="day_type", ax=ax2)
+ax2.set_title("Pola Peminjaman: Weekday vs Weekend")
 
-st.subheader("Customer Demographics")
+st.pyplot(fig2)
 
-col1, col2 = st.columns(2)
+# =========================
+# SECTION 2: SEGMENTASI USER
+# =========================
+st.header("2. 👥 Segmentasi Pengguna")
 
-with col1:
-    fig, ax = plt.subplots(figsize=(20, 10))
+total_users = df_filtered[["casual", "registered"]].sum()
 
-    sns.barplot(
-        y="customer_count",
-        x="gender",
-        data=bygender_df.sort_values(by="customer_count", ascending=False),
-        hue="gender",
-        palette=colors,
-        ax=ax
-    )
-    ax.set_title("Number of Customer by Gender", loc="center", fontsize=50)
-    ax.set_ylabel(None)
-    ax.set_xlabel(None)
-    ax.tick_params(axis='x', labelsize=35)
-    ax.tick_params(axis='y', labelsize=30)
-    st.pyplot(fig)
+fig3, ax3 = plt.subplots()
+total_users.plot(kind="bar", ax=ax3)
+ax3.set_title("Total Kontribusi Casual vs Registered")
+ax3.set_ylabel("Total Peminjaman")
 
-with col2:
-    fig, ax = plt.subplots(figsize=(20, 10))
+st.pyplot(fig3)
 
-    colors = ["#D3D3D3", "#90CAF9", "#D3D3D3", "#D3D3D3", "#D3D3D3"]
+# Per jam
+hour_users = df_filtered.groupby("hr")[["casual", "registered"]].mean()
 
-    sns.barplot(
-        y="customer_count",
-        x="age_group",
-        data=byage_df.sort_values(by="age_group", ascending=False),
-        palette=colors,
-        hue="age_group",
-        ax=ax
-    )
-    ax.set_title("Number of Customer by Age", loc="center", fontsize=50)
-    ax.set_ylabel(None)
-    ax.set_xlabel(None)
-    ax.tick_params(axis='x', labelsize=35)
-    ax.tick_params(axis='y', labelsize=30)
-    st.pyplot(fig)
+fig4, ax4 = plt.subplots()
+hour_users.plot(ax=ax4)
+ax4.set_title("Rata-rata Casual vs Registered per Jam")
 
-fig, ax = plt.subplots(figsize=(20, 10))
-colors = ["#90CAF9", "#D3D3D3", "#D3D3D3", "#D3D3D3", "#D3D3D3", "#D3D3D3", "#D3D3D3", "#D3D3D3"]
-sns.barplot(
-    x="customer_count",
-    y="state",
-    data=bystate_df.sort_values(by="customer_count", ascending=False),
-    hue="customer_count",
-    palette=colors,
-    ax=ax
-)
-ax.set_title("Number of Customer by States", loc="center", fontsize=30)
-ax.set_ylabel(None)
-ax.set_xlabel(None)
-ax.tick_params(axis='y', labelsize=20)
-ax.tick_params(axis='x', labelsize=15)
-st.pyplot(fig)
+st.pyplot(fig4)
 
-st.subheader("Best Customer Based on RFM Parameters")
+# =========================
+# SECTION 3: CUACA & MUSIM
+# =========================
+st.header("3. 🌦️ Pengaruh Cuaca dan Musim")
 
-col1, col2, col3 = st.columns(3)
+# Weather boxplot
+fig5, ax5 = plt.subplots()
+sns.boxplot(data=df_filtered, x="weathersit", y="cnt", ax=ax5)
+ax5.set_title("Pengaruh Cuaca terhadap Peminjaman")
 
-with col1:
-    avg_recency = round(rfm_df.recency.mean(), 1)
-    st.metric("Average Recency (days)", value=avg_recency)
+st.pyplot(fig5)
 
-with col2:
-    avg_frequency = round(rfm_df.frequency.mean(), 2)
-    st.metric("Average Frequency", value=avg_frequency)
+# Season barplot
+season_avg = df_filtered.groupby("season")["cnt"].mean()
 
-with col3:
-    avg_frequency = format_currency(rfm_df.monetary.mean(), "AUD", locale='es_CO')
-    st.metric("Average Monetary", value=avg_frequency)
+fig6, ax6 = plt.subplots()
+season_avg.plot(kind="bar", ax=ax6)
+ax6.set_title("Rata-rata Rental per Musim")
+ax6.set_xlabel("Season")
+ax6.set_ylabel("Avg Rental")
 
-fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(35, 15))
-colors = ["#90CAF9", "#90CAF9", "#90CAF9", "#90CAF9", "#90CAF9"]
+st.pyplot(fig6)
 
-sns.barplot(y="recency", x="customer_id", data=rfm_df.sort_values(by="recency", ascending=True).head(5), palette=colors, ax=ax[0])
-ax[0].set_ylabel(None)
-ax[0].set_xlabel("customer_id", fontsize=30)
-ax[0].set_title("By Recency (days)", loc="center", fontsize=50)
-ax[0].tick_params(axis='y', labelsize=30)
-ax[0].tick_params(axis='x', labelsize=35)
+# Correlation heatmap
+fig7, ax7 = plt.subplots()
+sns.heatmap(df_filtered[["temp","hum","windspeed","cnt"]].corr(), annot=True, ax=ax7)
+ax7.set_title("Correlation Heatmap")
 
-sns.barplot(y="frequency", x="customer_id", data=rfm_df.sort_values(by="frequency", ascending=False).head(5), palette=colors, ax=ax[1])
-ax[1].set_ylabel(None)
-ax[1].set_xlabel("customer_id", fontsize=30)
-ax[1].set_title("By Frequency", loc="center", fontsize=50)
-ax[1].tick_params(axis='y', labelsize=30)
-ax[1].tick_params(axis='x', labelsize=35)
+st.pyplot(fig7)
 
-sns.barplot(y="monetary", x="customer_id", data=rfm_df.sort_values(by="monetary", ascending=False).head(5), palette=colors, ax=ax[2])
-ax[2].set_ylabel(None)
-ax[2].set_xlabel("customer_id", fontsize=30)
-ax[2].set_title("By Monetary", loc="center", fontsize=50)
-ax[2].tick_params(axis='y', labelsize=30)
-ax[2].tick_params(axis='x', labelsize=35)
+# =========================
+# FOOTER
+# =========================
+st.markdown("---")
+st.caption("Dashboard by Data Analyst 🚀")
 
-st.pyplot(fig)
-
-st.caption('Copyright (c) Dicoding 2023')
