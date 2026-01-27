@@ -1,4 +1,15 @@
-# Dicoding Collection Dashboard ✨
+# 🚲 Bike Sharing Dashboard
+
+## 📂 Struktur Folder Project
+
+Pastikan struktur folder project seperti berikut:
+bike-sharing-dashboard/
+│
+├── app.py
+├── requirements.txt
+├── day.csv
+├── hour.csv
+└── README.md
 
 ## Setup Environment - Anaconda
 ```
@@ -19,3 +30,4 @@ pip install -r requirements.txt
 ## Run steamlit app
 ```
 streamlit run dashboard.py
+```
