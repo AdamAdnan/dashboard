@@ -247,126 +247,78 @@
 # ax[2].tick_params(axis='y', labelsize=30)
 # ax[2].tick_params(axis='x', labelsize=35)
 
-# st.pyplot(fig)
+# Batas
 
-# st.caption('Copyright (c) Dicoding 2023')
 
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
 
-# =========================
-# CONFIG
-# =========================
-st.set_page_config(page_title="Bike Sharing Dashboard", layout="wide")
-
-st.title("🚲 Bike Sharing Data Analysis Dashboard")
-
-# =========================
-# LOAD DATA
-# =========================
+# Load data
 @st.cache_data
 def load_data():
-    df = pd.read_csv("hour.csv")   # ganti jika nama file berbeda
-    return df
+    day = pd.read_csv("day.csv")
+    hour = pd.read_csv("hour.csv")
+    return day, hour
 
-df = load_data()
+day_df, hour_df = load_data()
 
-# =========================
-# SIDEBAR FILTER
-# =========================
+st.title("🚲 Bike Sharing Analysis Dashboard")
+
+# ======================
+# Sidebar Filter
+# ======================
 st.sidebar.header("Filter Data")
 
-year_filter = st.sidebar.selectbox(
-    "Pilih Tahun",
-    options=df["yr"].unique(),
-    format_func=lambda x: "2011" if x == 0 else "2012"
-)
+year_filter = st.sidebar.selectbox("Select Year", ["All", 2011, 2012])
 
-df_filtered = df[df["yr"] == year_filter]
+if year_filter != "All":
+    hour_df = hour_df[hour_df["yr"] == (0 if year_filter == 2011 else 1)]
+    day_df = day_df[day_df["yr"] == (0 if year_filter == 2011 else 1)]
 
-# =========================
-# SECTION 1: WAKTU OPERASIONAL
-# =========================
-st.header("1. ⏰ Waktu Operasional Optimal")
+# ======================
+# Business Overview
+# ======================
+st.subheader("Business Overview")
 
-avg_per_hour = df_filtered.groupby("hr")["cnt"].mean()
+total_rent = hour_df["cnt"].sum()
+total_casual = hour_df["casual"].sum()
+total_registered = hour_df["registered"].sum()
 
-fig1, ax1 = plt.subplots()
-avg_per_hour.plot(ax=ax1)
-ax1.set_title("Rata-rata Peminjaman per Jam")
-ax1.set_xlabel("Jam")
-ax1.set_ylabel("Jumlah Rental")
+col1, col2, col3 = st.columns(3)
+col1.metric("Total Rentals", total_rent)
+col2.metric("Casual Users", total_casual)
+col3.metric("Registered Users", total_registered)
 
-st.pyplot(fig1)
+# ======================
+# Q1: Peak Hour Analysis
+# ======================
+st.subheader("Peak Hour Analysis")
 
-# Weekday vs Weekend
-df_filtered["day_type"] = df_filtered["workingday"].apply(lambda x: "Weekday" if x == 1 else "Weekend")
-avg_daytype = df_filtered.groupby(["hr", "day_type"])["cnt"].mean().reset_index()
+hourly_avg = hour_df.groupby("hr")["cnt"].mean()
+
+fig, ax = plt.subplots()
+hourly_avg.plot(ax=ax)
+ax.set_xlabel("Hour")
+ax.set_ylabel("Average Rentals")
+st.pyplot(fig)
+
+# ======================
+# Q2: User Segment
+# ======================
+st.subheader("User Segment Comparison")
 
 fig2, ax2 = plt.subplots()
-sns.lineplot(data=avg_daytype, x="hr", y="cnt", hue="day_type", ax=ax2)
-ax2.set_title("Pola Peminjaman: Weekday vs Weekend")
-
+ax2.bar(["Casual", "Registered"], [total_casual, total_registered])
 st.pyplot(fig2)
 
-# =========================
-# SECTION 2: SEGMENTASI USER
-# =========================
-st.header("2. 👥 Segmentasi Pengguna")
+# ======================
+# Q3: Weather Impact
+# ======================
+st.subheader("Weather Impact")
 
-total_users = df_filtered[["casual", "registered"]].sum()
+weather_avg = hour_df.groupby("weathersit")["cnt"].mean()
 
 fig3, ax3 = plt.subplots()
-total_users.plot(kind="bar", ax=ax3)
-ax3.set_title("Total Kontribusi Casual vs Registered")
-ax3.set_ylabel("Total Peminjaman")
-
+weather_avg.plot(kind="bar", ax=ax3)
 st.pyplot(fig3)
-
-# Per jam
-hour_users = df_filtered.groupby("hr")[["casual", "registered"]].mean()
-
-fig4, ax4 = plt.subplots()
-hour_users.plot(ax=ax4)
-ax4.set_title("Rata-rata Casual vs Registered per Jam")
-
-st.pyplot(fig4)
-
-# =========================
-# SECTION 3: CUACA & MUSIM
-# =========================
-st.header("3. 🌦️ Pengaruh Cuaca dan Musim")
-
-# Weather boxplot
-fig5, ax5 = plt.subplots()
-sns.boxplot(data=df_filtered, x="weathersit", y="cnt", ax=ax5)
-ax5.set_title("Pengaruh Cuaca terhadap Peminjaman")
-
-st.pyplot(fig5)
-
-# Season barplot
-season_avg = df_filtered.groupby("season")["cnt"].mean()
-
-fig6, ax6 = plt.subplots()
-season_avg.plot(kind="bar", ax=ax6)
-ax6.set_title("Rata-rata Rental per Musim")
-ax6.set_xlabel("Season")
-ax6.set_ylabel("Avg Rental")
-
-st.pyplot(fig6)
-
-# Correlation heatmap
-fig7, ax7 = plt.subplots()
-sns.heatmap(df_filtered[["temp","hum","windspeed","cnt"]].corr(), annot=True, ax=ax7)
-ax7.set_title("Correlation Heatmap")
-
-st.pyplot(fig7)
-
-# =========================
-# FOOTER
-# =========================
-st.markdown("---")
-st.caption("Dashboard by Data Analyst 🚀")
-
